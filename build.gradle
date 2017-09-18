@@ -1,7 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'application'
 
-mainClassName = 'Quickstart'
+mainClassName = 'coreapp/DriveSync'
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 version = '1.0'
@@ -10,10 +10,13 @@ repositories {
     mavenCentral()
 }
 
+jar {
+    baseName = 'DriveSync'
+    version =  '0.1'
+}
+
 dependencies {
     compile 'com.google.api-client:google-api-client:1.22.0'
     compile 'com.google.oauth-client:google-oauth-client-jetty:1.22.0'
     compile 'com.google.apis:google-api-services-drive:v3-rev81-1.22.0'
-
-
 }
