@@ -102,7 +102,6 @@ public class SyncFunctions {
     private static File checkForFolder(String name) throws IOException
     {
         String pageToken = null;
-        System.out.println("mimeType='application/vnd.google-apps.folder' and name contains '" + name + "'");
         do {
           FileList result = DriveSync.driveService.files().list()
               .setQ("mimeType='application/vnd.google-apps.folder' and name contains '" + name + "'")
@@ -162,6 +161,10 @@ public class SyncFunctions {
             }
             else if (file.isDirectory())
             {
+                File rootFolder;
+                rootFolder = checkForFolder("DriveSync Test");
+                if (rootFolder == null)
+                    createFolder("DriveSync Test", "root");
                 File newFolder = checkForFolder(file.getName());
                 if (newFolder == null)
                 {
