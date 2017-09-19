@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class SyncFunctions {
@@ -98,10 +99,49 @@ public class SyncFunctions {
                 .build();
     }
 
+    public static File checkForFolder() throws IOException
+    {
+        String pageToken = null;
+        do {
+          FileList result = DriveSync.driveService.files().list()
+              .setQ("mimeType='application/vnd.google-apps.folder' and name contains 'DriveSync Test'")
+              .setSpaces("drive")
+              .setFields("nextPageToken, files(id, name)")
+              .setPageToken(pageToken)
+              .execute();
+          for (File file : result.getFiles()) {
+            System.out.printf("Found file: %s (%s)\n",
+                file.getName(), file.getId());
+            return file;
+          }
+          pageToken = result.getNextPageToken();
+        } while (pageToken != null);
+        return null;
+    }
+    
     public static void uploadFile(Drive driveService, String filename, String path) throws IOException
     {
+        //See if drive already has folder, 
+        File uploadFolder = checkForFolder();
+        
+        if (uploadFolder == null)
+        {
+            File folderMetadata = new File();
+            folderMetadata.setName("DriveSync Test");
+            folderMetadata.setMimeType("application/vnd.google-apps.folder");
+
+            uploadFolder = driveService.files().create(folderMetadata)
+                .setFields("id")
+                .execute();
+            System.out.println("Folder ID: " + uploadFolder.getId());
+        }
+        
         File fileMetadata = new File();
         fileMetadata.setName(filename);
+        
+        //Put file in folder
+        fileMetadata
+                .setParents(Collections.singletonList(uploadFolder.getId()));
         String combinedpath =  path + filename;
         System.out.println(combinedpath);
         java.io.File filePath = new java.io.File(combinedpath);
