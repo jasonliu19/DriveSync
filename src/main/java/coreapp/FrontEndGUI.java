@@ -132,7 +132,7 @@ public class FrontEndGUI extends javax.swing.JFrame {
         String path = txtPathfield.getText();
         try
         {
-            SyncFunctions.uploadFolder(path);
+            SyncFunctions.uploadFolder(path, null);
             lblStatus.setText("Success");
         }
         catch (IOException e)
