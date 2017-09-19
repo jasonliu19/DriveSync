@@ -132,12 +132,13 @@ public class FrontEndGUI extends javax.swing.JFrame {
         String path = txtPathfield.getText();
         try
         {
-            SyncFunctions.uploadFile(DriveSync.driveService, "econ.docx", path);
+            SyncFunctions.uploadFolder(path);
             lblStatus.setText("Success");
         }
         catch (IOException e)
         {
             lblStatus.setText(e.getMessage());
+            System.out.println(e.getMessage());
         }
     }//GEN-LAST:event_btnEnterActionPerformed
 

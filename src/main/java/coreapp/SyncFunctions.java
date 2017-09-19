@@ -119,7 +119,21 @@ public class SyncFunctions {
         return null;
     }
     
-    public static void uploadFile(Drive driveService, String filename, String path) throws IOException
+    
+    public static void uploadFolder(String path) throws IOException
+    {
+        //Convert path to java file
+        java.io.File folder = new java.io.File(path);
+
+        //Iterate through files
+        for (java.io.File file : folder.listFiles())
+        {
+            uploadFile(DriveSync.driveService, file.getName(), path);
+        }
+    }
+    
+    
+    private static void uploadFile(Drive driveService, String filename, String path) throws IOException
     {
         //See if drive already has folder, 
         File uploadFolder = checkForFolder();
@@ -133,23 +147,27 @@ public class SyncFunctions {
             uploadFolder = driveService.files().create(folderMetadata)
                 .setFields("id")
                 .execute();
-            System.out.println("Folder ID: " + uploadFolder.getId());
+            System.out.println("Found folder with ID: " + uploadFolder.getId());
         }
         
         File fileMetadata = new File();
+        
+        //Set file name
         fileMetadata.setName(filename);
         
         //Put file in folder
-        fileMetadata
-                .setParents(Collections.singletonList(uploadFolder.getId()));
+        fileMetadata.setParents(Collections.singletonList(uploadFolder.getId()));
+        //Create path for the document to be uploaded
         String combinedpath =  path + filename;
-        System.out.println(combinedpath);
         java.io.File filePath = new java.io.File(combinedpath);
+        
+        //Set file path and MIME type
         FileContent mediaContent = new FileContent("application/msword", filePath);
+        //Attempt to upload file
         File file = driveService.files().create(fileMetadata, mediaContent)
             .setFields("id")
             .execute();
-        System.out.println("File ID: " + file.getId());
+        System.out.println("Uploaded file with ID: " + file.getId());
         return;
 
     }
