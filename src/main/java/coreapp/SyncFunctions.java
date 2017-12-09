@@ -112,7 +112,7 @@ public class SyncFunctions {
         String pageToken = null;
         do {
           FileList result = DriveSync.driveService.files().list()
-              .setQ("mimeType='application/vnd.google-apps.folder' and = '" 
+              .setQ("mimeType='application/vnd.google-apps.folder' and name = '" 
                       + name + "'")
               .setSpaces("drive")
               .setFields("nextPageToken, files(id, name)")
