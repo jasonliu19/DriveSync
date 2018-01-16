@@ -16,15 +16,13 @@ public class DriveSync {
 
         //Create drive service
         driveService = SyncFunctions.getDriveService();
-        File rootFolder = SyncFunctions.checkForFolder("DriveSync Test");
+        File rootFolder = SyncFunctions.updateMainDriveFolder();
         
-        if(rootFolder == null)
-            rootFolder = SyncFunctions.createFolder("DriveSync Test", "root");
+        Constants.ROOT_FOLDER_ID = rootFolder.getId();
         //Create and display the GUI
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 new FrontEndGUI().setVisible(true);
-                
         
             }
         });

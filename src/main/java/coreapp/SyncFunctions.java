@@ -101,29 +101,43 @@ public class SyncFunctions {
                 .build();
     }
 
+    public static File updateMainDriveFolder()throws IOException{
+        File rootFolder;
+        rootFolder = checkForFolder("DriveSync Test", null);
+        if (rootFolder == null)
+            rootFolder = createFolder("DriveSync Test", "root");
+        return rootFolder;
+    }
+    
     /**
     * Searches for and returns a file describing the first folder matching 
     * the given query, returns null if no folder is found
     * String name: The name of the folder being searched
     * @return the File describing the found folder, or null if no folder is found
     */
-    public static File checkForFolder(String name) throws IOException
+    public static File checkForFolder(String name, String parentID) throws IOException
     {
+        //Null signifies no parent
         String pageToken = null;
+        if(parentID == null){
+            parentID = "root";
+        }
         do {
-          FileList result = DriveSync.driveService.files().list()
-              .setQ("mimeType='application/vnd.google-apps.folder' and name = '" 
-                      + name + "'")
-              .setSpaces("drive")
-              .setFields("nextPageToken, files(id, name)")
-              .setPageToken(pageToken)
-              .execute();
-          for (File file : result.getFiles()) {
+            String Q = "mimeType='application/vnd.google-apps.folder' and name = '" 
+                            + name + "' and '" + parentID +"' in parents";
+            System.out.println("Name of folder: " + name +" Query: " + Q);
+            FileList returnedFiles = DriveSync.driveService.files().list()
+                    .setQ(Q)
+                    .setSpaces("drive")
+                    .setFields("nextPageToken, files(id, name)")
+                    .setPageToken(pageToken)
+                    .execute();
+          for (File file : returnedFiles.getFiles()) {
             System.out.printf("Found folder: %s (%s)\n",
                 file.getName(), file.getId());
             return file;
           }
-          pageToken = result.getNextPageToken();
+          pageToken = returnedFiles.getNextPageToken();
         } while (pageToken != null);
         
         
@@ -133,27 +147,29 @@ public class SyncFunctions {
     /*
     * Creates folder with name name and parent parent
     * @name: name of the folder to be created
-    * @parent: parent folder of the folder to be created
+    * @parentID: id of the parent folder of the folder to be created
     * @return the File with information about the created folder
     */
-    public static File createFolder(String name, String parent) 
+    public static File createFolder(String name, String parentID) 
             throws IOException
     {
         File folderMetadata = new File();
-        if (parent == "root")
-            ;//Don't assign parent
-        else if (parent == null)
-        {
-            File defaultParent = checkForFolder("DriveSync Test");
-            folderMetadata.setParents(Collections.
-                    singletonList(defaultParent.getId()));
-        }
-        else
-        {
-            File newParent = checkForFolder(parent);
-            folderMetadata.setParents(Collections.
-                    singletonList(newParent.getId()));
-        }
+//        if (parent == "root")
+//            ;//Don't assign parent
+//        else if (parent == null)
+//        {
+//            File defaultParent = checkForFolder("DriveSync Test");
+//            folderMetadata.setParents(Collections.
+//                    singletonList(defaultParent.getId()));
+//        }
+//        else
+//        {
+//            File newParent = checkForFolder(parent);
+//            folderMetadata.setParents(Collections.
+//                    singletonList(newParent.getId()));
+//        }
+        folderMetadata.setParents(Collections.
+                    singletonList(parentID));
         folderMetadata.setName(name);
         folderMetadata.setMimeType("application/vnd.google-apps.folder");
         System.out.println ("Creating folder with name: " + name);
@@ -163,12 +179,20 @@ public class SyncFunctions {
         
     }
     
+    public static File getFolder(String name, String parentID) throws IOException{
+        File returnValue = checkForFolder(name, parentID);
+        
+        if(returnValue == null){
+            returnValue = createFolder(name, parentID);
+        }
+        return returnValue;
+    }
     /*
     * Uploads all the contents of a folder on the local machine
     * @path: Full path of the folder with a "/" at the end
-    * @folderName: Name of the target upload folder in Drive
+    * @thisFolderID: ID of the folder to be uploaded
     */
-    public static void uploadFolder(String path, String folderName) 
+    public static void uploadFolder(String path, String thisFolderID) 
             throws IOException
     {
         //Convert path to java file
@@ -179,22 +203,16 @@ public class SyncFunctions {
         {
             if(file.isFile())
             {
-                uploadFile(file.getName(), path, folderName);
+                System.out.println("File has name: " + file.getName());
+                uploadFile(file.getName(), path, thisFolderID);
             }
             else if (file.isDirectory())
             {
-                File rootFolder;
-                rootFolder = checkForFolder("DriveSync Test");
-                if (rootFolder == null)
-                    createFolder("DriveSync Test", "root");
-                File newFolder = checkForFolder(file.getName());
-                if (newFolder == null)
-                {
-                    createFolder(file.getName(), folderName);
-                }
+                updateMainDriveFolder();
+                File nextFolder = getFolder(file.getName(), thisFolderID);
                     
 //                System.out.println("Name of folder" + file.getPath()+ "\\");
-                uploadFolder(file.getPath() + "\\", file.getName());
+                uploadFolder(file.getPath() + "\\", nextFolder.getId());
             }
         }
     }
@@ -203,25 +221,24 @@ public class SyncFunctions {
     * Uploads a single file to Drive (Max ~10mb)
     * @filename: Name of the file (including extension) to be uploaded
     * @path: Full path of the folder containing the file (terminating in "/"
-    * @folderName: Target folder in Drive i.e. the folder were the file 
+    * @parentID: Target folder in Drive i.e. the folder were the file 
     * will be placed in drive
     */
-    private static void uploadFile(String filename, String path, String folderName) throws IOException
+    private static void uploadFile(String filename, String path, String parentID) throws IOException
     {
         //See if drive already has folder, 
-        File uploadFolder;
         
-        //If root folder
-        if (folderName == null)
-        {
-            uploadFolder = checkForFolder("DriveSync Test");
-        }
-        else
-        {
-            uploadFolder = checkForFolder(folderName);
-            System.out.println("File being placed in" + 
-                    folderName + "has id: " + uploadFolder.getId());
-        }
+//        //If root folder
+//        if (folderName == null)
+//        {
+//            uploadFolder = checkForFolder("DriveSync Test");
+//        }
+//        else
+//        {
+//            uploadFolder = checkForFolder(folderName);
+//            System.out.println("File being placed in" + 
+//                    folderName + "has id: " + uploadFolder.getId());
+//        }
         
         
         File fileMetadata = new File();
@@ -229,7 +246,7 @@ public class SyncFunctions {
         fileMetadata.setName(filename);
         
         //Put file in folder
-        fileMetadata.setParents(Collections.singletonList(uploadFolder.getId()));
+        fileMetadata.setParents(Collections.singletonList(parentID));
         //Create path for the document to be uploaded
         String combinedpath =  path + filename;
         java.io.File filePath = new java.io.File(combinedpath);
@@ -238,7 +255,7 @@ public class SyncFunctions {
         FileContent mediaContent = new FileContent("application/msword", filePath);
         //Attempt to upload file
         File file = DriveSync.driveService.files().create(fileMetadata, mediaContent)
-            .setFields("id")
+            .setFields("id, parents")
             .execute();
         System.out.println("Uploaded file with ID: " + file.getId());
         return;
