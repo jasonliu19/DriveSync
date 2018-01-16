@@ -124,7 +124,7 @@ public class SyncFunctions {
         }
         do {
             String Q = "mimeType='application/vnd.google-apps.folder' and name = '" 
-                            + name + "' and '" + parentID +"' in parents";
+                            + name + "' and '" + parentID +"' in parents and trashed = false";
             System.out.println("Name of folder: " + name +" Query: " + Q);
             FileList returnedFiles = DriveSync.driveService.files().list()
                     .setQ(Q)
@@ -212,7 +212,7 @@ public class SyncFunctions {
                 File nextFolder = getFolder(file.getName(), thisFolderID);
                     
 //                System.out.println("Name of folder" + file.getPath()+ "\\");
-                uploadFolder(file.getPath() + "\\", nextFolder.getId());
+                uploadFolder(file.getPath()+"/", nextFolder.getId());
             }
         }
     }
