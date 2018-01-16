@@ -1,6 +1,7 @@
 package coreapp;
 
-import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.model.File;
+
 import java.io.IOException;
 
 /*
@@ -20,6 +21,7 @@ public class FrontEndGUI extends javax.swing.JFrame {
      */
     public FrontEndGUI() {
         initComponents();
+        syncFunctions = new SyncFunctions();
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
@@ -42,6 +44,7 @@ public class FrontEndGUI extends javax.swing.JFrame {
         }
         //</editor-fold>
     }
+    private SyncFunctions syncFunctions;
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -124,14 +127,22 @@ public class FrontEndGUI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+
     private void txtPathfieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtPathfieldActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtPathfieldActionPerformed
 
     private void btnEnterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEnterActionPerformed
+
+        FileUtilities fileUtilities = new FileUtilities();
         String path = txtPathfield.getText();
         try
         {
+            if(!fileUtilities.isValidPath(path)){
+                throw new IOException("Pleas enter a valid path.");
+            }
+            Constants.ROOT_FOLDER_ID = SyncFunctions.updateMainDriveFolder().getId();
+            path = fileUtilities.ensureEndSlash(path);
             SyncFunctions.uploadFolder(path, Constants.ROOT_FOLDER_ID);
             lblStatus.setText("Success");
         }

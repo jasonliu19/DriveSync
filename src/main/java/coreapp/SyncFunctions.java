@@ -69,23 +69,38 @@ public class SyncFunctions {
      */
     public static Credential authorize() throws IOException {
         // Load client secrets.
-        InputStream in =
-            SyncFunctions.class.getResourceAsStream("/client_secret.json");
-        GoogleClientSecrets clientSecrets =
-            GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+        int attempts = 0;
 
-        // Build flow and trigger user authorization request.
-        GoogleAuthorizationCodeFlow flow =
-                new GoogleAuthorizationCodeFlow.Builder(
-                        HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(DATA_STORE_FACTORY)
-                .setAccessType("offline")
-                .build();
-        Credential credential = new AuthorizationCodeInstalledApp(
-            flow, new LocalServerReceiver()).authorize("user");
-        System.out.println(
-                "Credentials saved to " + DATA_STORE_DIR.getAbsolutePath());
-        return credential;
+        //Deletes saved credentials on fail
+        while (attempts < 3){
+            try{
+                InputStream in =
+                        SyncFunctions.class.getResourceAsStream("/client_secret.json");
+                GoogleClientSecrets clientSecrets =
+                        GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+
+                // Build flow and trigger user authorization request.
+                GoogleAuthorizationCodeFlow flow =
+                        new GoogleAuthorizationCodeFlow.Builder(
+                                HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
+                                .setDataStoreFactory(DATA_STORE_FACTORY)
+                                .setAccessType("offline")
+                                .build();
+                Credential credential = new AuthorizationCodeInstalledApp(
+                        flow, new LocalServerReceiver()).authorize("user");
+                System.out.println(
+                        "Credentials saved to " + DATA_STORE_DIR.getAbsolutePath());
+                return credential;
+            }catch (IOException e){
+                attempts++;
+                DATA_STORE_DIR.delete();
+                if(attempts >= 3){
+                    throw e;
+                }
+            }
+        }
+        //Never called
+        return null;
     }
 
     /**
@@ -125,7 +140,7 @@ public class SyncFunctions {
         do {
             String Q = "mimeType='application/vnd.google-apps.folder' and name = '" 
                             + name + "' and '" + parentID +"' in parents and trashed = false";
-            System.out.println("Name of folder: " + name +" Query: " + Q);
+//            System.out.println("Name of folder: " + name +" Query: " + Q);
             FileList returnedFiles = DriveSync.driveService.files().list()
                     .setQ(Q)
                     .setSpaces("drive")
@@ -154,8 +169,10 @@ public class SyncFunctions {
             throws IOException
     {
         File folderMetadata = new File();
-//        if (parent == "root")
-//            ;//Don't assign parent
+        if (parentID != "root")
+            folderMetadata.setParents(Collections.
+                    singletonList(parentID));
+            //            ;//Don't assign parent
 //        else if (parent == null)
 //        {
 //            File defaultParent = checkForFolder("DriveSync Test");
@@ -168,13 +185,12 @@ public class SyncFunctions {
 //            folderMetadata.setParents(Collections.
 //                    singletonList(newParent.getId()));
 //        }
-        folderMetadata.setParents(Collections.
-                    singletonList(parentID));
+
         folderMetadata.setName(name);
         folderMetadata.setMimeType("application/vnd.google-apps.folder");
         System.out.println ("Creating folder with name: " + name);
         return(DriveSync.driveService.files().create(folderMetadata)
-            .setFields("id")
+            .setFields("id, parents")
             .execute());
         
     }
@@ -203,7 +219,7 @@ public class SyncFunctions {
         {
             if(file.isFile())
             {
-                System.out.println("File has name: " + file.getName());
+                System.out.print("File has name: " + file.getName());
                 uploadFile(file.getName(), path, thisFolderID);
             }
             else if (file.isDirectory())
@@ -216,7 +232,8 @@ public class SyncFunctions {
             }
         }
     }
-    
+
+
     /*
     * Uploads a single file to Drive (Max ~10mb)
     * @filename: Name of the file (including extension) to be uploaded
@@ -226,39 +243,30 @@ public class SyncFunctions {
     */
     private static void uploadFile(String filename, String path, String parentID) throws IOException
     {
-        //See if drive already has folder, 
-        
-//        //If root folder
-//        if (folderName == null)
-//        {
-//            uploadFolder = checkForFolder("DriveSync Test");
-//        }
-//        else
-//        {
-//            uploadFolder = checkForFolder(folderName);
-//            System.out.println("File being placed in" + 
-//                    folderName + "has id: " + uploadFolder.getId());
-//        }
+        FileUtilities fileUtilities = new FileUtilities();
         
         
         File fileMetadata = new File();
-        //Set file name
+
         fileMetadata.setName(filename);
-        
-        //Put file in folder
+
         fileMetadata.setParents(Collections.singletonList(parentID));
         //Create path for the document to be uploaded
         String combinedpath =  path + filename;
         java.io.File filePath = new java.io.File(combinedpath);
         
         //Set file path and MIME type
-        FileContent mediaContent = new FileContent("application/msword", filePath);
+        String mimeType = fileUtilities.getMimeType(combinedpath);
+        if(mimeType == null) //Do not upload
+            return;
+
+        System.out.println(filename + " has type: " + mimeType);
+        FileContent mediaContent = new FileContent(mimeType, filePath);
         //Attempt to upload file
         File file = DriveSync.driveService.files().create(fileMetadata, mediaContent)
             .setFields("id, parents")
             .execute();
         System.out.println("Uploaded file with ID: " + file.getId());
-        return;
 
     }
 
