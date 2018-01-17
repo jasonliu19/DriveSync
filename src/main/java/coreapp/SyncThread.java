@@ -28,6 +28,7 @@ public class SyncThread extends Thread {
     private StatusUpdateCallback parentClass;
     private String startingPath;
     private String startingFolderID;
+    private FileUtilities fileUtilities;
     @Override
     public void run(){
         try {
@@ -39,6 +40,7 @@ public class SyncThread extends Thread {
 
 
     public SyncThread(StatusUpdateCallback parentClass, String startingPath, String startingFolderID){
+        fileUtilities = new FileUtilities();
         this.parentClass = parentClass;
         this.startingFolderID = startingFolderID;
         this.startingPath = startingPath;
@@ -66,8 +68,8 @@ public class SyncThread extends Thread {
             parentID = "root";
         }
         do {
-            String Q = "mimeType='application/vnd.google-apps.folder' and name = '"
-                            + name + "' and '" + parentID +"' in parents and trashed = false";
+            String Q = "mimeType='application/vnd.google-apps.folder' and name = \""
+                            + name + "\" and '" + parentID +"' in parents and trashed = false";
 //            System.out.println("Name of folder: " + name +" Query: " + Q);
             FileList returnedFiles = DriveSync.driveService.files().list()
                     .setQ(Q)
@@ -81,6 +83,34 @@ public class SyncThread extends Thread {
             return file;
           }
           pageToken = returnedFiles.getNextPageToken();
+        } while (pageToken != null);
+
+
+        return null;
+    }
+
+    private File checkForFile(String filename, String path, String parentID) throws IOException
+    {
+        //Null signifies no parent
+        String mimeType = fileUtilities.getMimeType(path+filename);
+        String pageToken = null;
+        if(parentID == null){
+            parentID = "root";
+        }
+        do {
+            String Q = "mimeType='"+ mimeType+ "' and name = \""
+                    + filename + "\" and '" + parentID +"' in parents and trashed = false";
+            System.out.println("Query: " + Q);
+            FileList returnedFiles = DriveSync.driveService.files().list()
+                    .setQ(Q)
+                    .setSpaces("drive")
+                    .setFields("nextPageToken, files(id, name)")
+                    .setPageToken(pageToken)
+                    .execute();
+            for (File file : returnedFiles.getFiles()) {
+                return file;
+            }
+            pageToken = returnedFiles.getNextPageToken();
         } while (pageToken != null);
 
 
@@ -148,11 +178,10 @@ public class SyncThread extends Thread {
             if(file.isFile())
             {
                 System.out.print("File has name: " + file.getName());
-                uploadFile(file.getName(), path, thisFolderID);
+                updateFileContent(file.getName(), path, thisFolderID);
             }
             else if (file.isDirectory())
             {
-                updateMainDriveFolder();
                 File nextFolder = getFolder(file.getName(), thisFolderID);
 
 //                System.out.println("Name of folder" + file.getPath()+ "\\");
@@ -161,6 +190,31 @@ public class SyncThread extends Thread {
         }
     }
 
+    private void updateFileContent(String filename, String path, String parentID) throws IOException{
+
+
+        File currentDriveFile = checkForFile(filename, path, parentID);
+        if(currentDriveFile == null){
+            uploadFile(filename, path, parentID);
+        } else{
+            String combinedPath = path + filename;
+            java.io.File filePath = new java.io.File(combinedPath);
+
+            File metaData  = new File();
+            metaData.setName(filename);
+
+
+            //Create path for the document to be uploaded
+
+            FileContent mediaContent = new FileContent(currentDriveFile.getMimeType(), filePath);
+
+            File uploadResult = DriveSync.driveService.files().update(currentDriveFile.getId(), metaData, mediaContent)
+                    .execute();
+            System.out.println("--Updated file with ID: " + uploadResult.getId());
+
+        }
+
+    }
 
     /*
     * Uploads a single file to Drive (Max ~10mb)

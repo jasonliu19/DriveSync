@@ -16,7 +16,7 @@ public class DriveSync {
 
         //Create drive service
         driveService = DriveInitializer.getDriveService();
-
+        DriveInitializer.updateRootDriveConstant();
         //Create and display the GUI
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {

@@ -32,6 +32,14 @@ public class FileUtilities {
         }
     }
 
+    public String removeFileExtension(String fileName){
+        int index = fileName.indexOf('.');
+        if(index == -1)
+            return fileName;
+
+        return fileName.substring(0, index);
+    }
+
     public FileUtilities(){
 
     }

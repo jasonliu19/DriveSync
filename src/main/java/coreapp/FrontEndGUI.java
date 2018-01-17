@@ -148,8 +148,8 @@ public class FrontEndGUI extends javax.swing.JFrame implements StatusUpdateCallb
 
             path = fileUtilities.ensureEndSlash(path);
 
+            DriveInitializer.updateRootDriveConstant();
             syncThread = new SyncThread(this, path, Constants.ROOT_FOLDER_ID);
-            Constants.ROOT_FOLDER_ID = syncThread.updateMainDriveFolder().getId();
             syncThread.start();
             //lblStatus.setText("Success");
         }

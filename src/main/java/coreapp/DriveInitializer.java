@@ -111,4 +111,9 @@ public class DriveInitializer {
                 .setApplicationName(APPLICATION_NAME)
                 .build();
     }
+
+    public static void updateRootDriveConstant() throws  IOException{
+        SyncThread temp = new SyncThread(null, null, null);
+        Constants.ROOT_FOLDER_ID = temp.updateMainDriveFolder().getId();
+    }
 }
