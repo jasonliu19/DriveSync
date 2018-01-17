@@ -1,6 +1,5 @@
 package coreapp;
 
-import com.google.api.services.drive.Drive;
 import java.io.IOException;
 
 /*
@@ -13,7 +12,7 @@ import java.io.IOException;
  *
  * @author Jason
  */
-public class FrontEndGUI extends javax.swing.JFrame {
+public class FrontEndGUI extends javax.swing.JFrame implements StatusUpdateCallback{
 
     /**
      * Creates new form FrontEndGUI
@@ -43,6 +42,12 @@ public class FrontEndGUI extends javax.swing.JFrame {
         //</editor-fold>
     }
 
+
+    @Override
+    public void updateStatus(String text){
+        System.out.println("Callbacked");
+        lblStatus.setText(text);
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -124,16 +129,29 @@ public class FrontEndGUI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+
     private void txtPathfieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtPathfieldActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtPathfieldActionPerformed
 
     private void btnEnterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEnterActionPerformed
+
+        SyncThread syncThread;
+        FileUtilities fileUtilities = new FileUtilities();
         String path = txtPathfield.getText();
         try
         {
-            SyncFunctions.uploadFolder(path);
-            lblStatus.setText("Success");
+            if(!fileUtilities.isValidPath(path)){
+                throw new IOException("Please enter a valid path.");
+            }
+
+
+            path = fileUtilities.ensureEndSlash(path);
+
+            syncThread = new SyncThread(this, path, Constants.ROOT_FOLDER_ID);
+            Constants.ROOT_FOLDER_ID = syncThread.updateMainDriveFolder().getId();
+            syncThread.start();
+            //lblStatus.setText("Success");
         }
         catch (IOException e)
         {
