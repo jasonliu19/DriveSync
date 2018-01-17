@@ -15,10 +15,8 @@ public class DriveSync {
     public static void main(String[] args) throws IOException {
 
         //Create drive service
-        driveService = SyncFunctions.getDriveService();
-        File rootFolder = SyncFunctions.updateMainDriveFolder();
-        
-        Constants.ROOT_FOLDER_ID = rootFolder.getId();
+        driveService = DriveInitializer.getDriveService();
+
         //Create and display the GUI
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
