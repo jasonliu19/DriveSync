@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 public class FileUtilities {
     public boolean isValidPath(String path){
         File filePath = new File(path);
-        if(filePath.exists()){
+        if(filePath.isDirectory()){
             return true;
         }
         return false;
@@ -40,6 +40,34 @@ public class FileUtilities {
         return fileName.substring(0, index);
     }
 
+    public static long getTotalDirSizeKB(String path){
+        java.io.File folder = new java.io.File(path);
+
+        long sizeInBytes = getTotalDirSizeHelper(path);
+        return getTotalDirSizeHelper(path)/(1024);
+
+        
+    }
+    
+    private static long getTotalDirSizeHelper(String path){
+        java.io.File folder = new java.io.File(path);
+
+        //Iterate through files
+        long totalSize = 0;
+        for (java.io.File file : folder.listFiles())
+        {
+            if(file.isFile())
+            {
+                totalSize += file.length();
+            }
+            else if (file.isDirectory())
+            {
+                totalSize += getTotalDirSizeHelper(file.getPath()+"/");
+            }
+        }
+        return totalSize;
+    }
+    
     public FileUtilities(){
 
     }

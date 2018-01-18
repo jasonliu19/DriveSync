@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 
 public class DriveSync {
     public static Drive driveService;
@@ -39,6 +40,47 @@ public class DriveSync {
     }
 
 
+    private static void startSyncFromShell(String path){
+        FileUtilities fileUtilities = new FileUtilities();
+        try
+        {
+            if(!fileUtilities.isValidPath(path)){
+                throw new IOException("Please enter a valid path.");
+            }
+
+
+            path = fileUtilities.ensureEndSlash(path);
+
+        } catch(IOException e){
+            e.printStackTrace();
+            System.exit(2);
+        }
+        
+        long totalSizeOfData = FileUtilities.getTotalDirSizeKB(path);
+        if(totalSizeOfData > Constants.DATASIZE_WARNING_AMOUNT){
+            System.out.println(path + " has " +totalSizeOfData/1024 + "MB of data. Proceed? y/n");
+            String response = " ";
+            Scanner scanner = new Scanner(System.in);
+            while(!response.equals("y") && !response.equals("n")){
+                response = scanner.next() ;
+            }
+
+            if(response.equals("y")){
+                
+                driveService = DriveInitializer.getDriveService();
+                DriveInitializer.updateRootDriveConstant();
+
+                startSync(path, null);
+            }
+            else
+                System.out.println("Aborted");
+
+        }else{
+            driveService = DriveInitializer.getDriveService();
+            DriveInitializer.updateRootDriveConstant();
+            startSync(path, null);
+        }
+    }
     public static void main(String[] args) throws IOException {
 
         boolean startGUI = false;
@@ -59,15 +101,22 @@ public class DriveSync {
                 startGUI = true;
                 break;
             }
+            if(s.equals("-t")){
+                System.out.println("Starting test");
+                path = args[args.length-1];
+                System.out.println("Size of " + path +" is: " +FileUtilities.getTotalDirSizeKB(path));
+                return;
+            }
         }
 
         path = args[args.length-1];
-
+        
+        System.out.println("Path: " + path);
         //Create drive service
-        driveService = DriveInitializer.getDriveService();
-        DriveInitializer.updateRootDriveConstant();
         //Create and display the GUI
         if(startGUI) {
+            driveService = DriveInitializer.getDriveService();
+            DriveInitializer.updateRootDriveConstant();
             java.awt.EventQueue.invokeLater(new Runnable() {
                 public void run() {
                     new FrontEndGUI().setVisible(true);
@@ -75,7 +124,7 @@ public class DriveSync {
                 }
             });
         } else{
-            startSync(path, null);
+            startSyncFromShell(path);
         }
     }
 

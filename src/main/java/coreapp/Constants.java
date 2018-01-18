@@ -11,4 +11,5 @@ package coreapp;
  */
 public class Constants {
     public static String ROOT_FOLDER_ID;
+    public static final long DATASIZE_WARNING_AMOUNT = 50*1024;
 }

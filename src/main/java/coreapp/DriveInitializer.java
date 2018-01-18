@@ -20,6 +20,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DriveInitializer {
     /** Application name. */
@@ -106,16 +108,30 @@ public class DriveInitializer {
      * @return an authorized Drive client service
      * @throws IOException
      */
-    public static Drive getDriveService() throws IOException {
-        Credential credential = authorize();
-        return new Drive.Builder(
-                HTTP_TRANSPORT, JSON_FACTORY, credential)
-                .setApplicationName(APPLICATION_NAME)
-                .build();
+    public static Drive getDriveService(){
+        try {
+            Credential credential = authorize();
+            return new Drive.Builder(
+                    HTTP_TRANSPORT, JSON_FACTORY, credential)
+                    .setApplicationName(APPLICATION_NAME)
+                    .build();
+        } catch (IOException ex) {
+            System.out.println("Failed to get drive service");
+            ex.printStackTrace();
+            System.exit(4);
+        }
+        //Never reached
+        return null;
     }
 
-    public static void updateRootDriveConstant() throws  IOException{
-        SyncThread temp = new SyncThread(null, null, null);
-        Constants.ROOT_FOLDER_ID = temp.updateMainDriveFolder().getId();
+    public static void updateRootDriveConstant(){
+        try {
+            SyncThread temp = new SyncThread(null, null, null);
+            Constants.ROOT_FOLDER_ID = temp.updateMainDriveFolder().getId();
+        } catch (IOException ex) {
+            System.out.println("Failed to get update root folder");
+            ex.printStackTrace();
+            System.exit(5);
+        }
     }
 }
