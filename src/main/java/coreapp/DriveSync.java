@@ -89,29 +89,30 @@ public class DriveSync {
         if(args.length == 0){
             System.out.println("Please enter a valid command:");
             System.out.println("'-g' -starts a GUI based uploader");
-            System.out.println("   e.g. 'drivesync -g'");
-            System.out.println("'pathToFolder' -uploads a folder without a GUI");
-            System.out.println("   e.g. 'drivesync /home/user/Documents/folderToBeUploaded'");
+            System.out.println("   e.g. drivesync -g");
+            System.out.println("lastargument -uploads this folder without a GUI");
+            System.out.println("   e.g. drivesync '/home/user/Documents/folderToBeUploaded'");
+            System.out.println("'-d' -Prevents subfolders from being uploaded");
+            System.out.println("   e.g. drivesync -d '/home/user/Documents/folderToBeUploaded'");
+            System.out.println("'-l' -Allows large(>25MB) files to be uploaded");
+            System.out.println("   e.g. drivesync -d '/home/user/Documents/folderToBeUploaded'");            
             return;
         }
 
         for(String s : args){
+            if(s.equals("-d")){
+                Constants.RECURSIVELY_UPLOAD_SUBFOLDERS = false;
+            }
+            if(s.equals("-L")){
+                Constants.ALLOW_LARGE_FILES = true;
+            }
             if(s.equals("-g")){
                 System.out.println("Starting GUI");
                 startGUI = true;
-                break;
-            }
-            if(s.equals("-t")){
-                System.out.println("Starting test");
-                path = args[args.length-1];
-                System.out.println("Size of " + path +" is: " +FileUtilities.getTotalDirSizeKB(path));
-                return;
             }
         }
-
-        path = args[args.length-1];
         
-        System.out.println("Path: " + path);
+        
         //Create drive service
         //Create and display the GUI
         if(startGUI) {
@@ -124,6 +125,7 @@ public class DriveSync {
                 }
             });
         } else{
+            path = args[args.length-1];
             startSyncFromShell(path);
         }
     }
