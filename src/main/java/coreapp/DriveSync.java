@@ -89,13 +89,13 @@ public class DriveSync {
         if(args.length == 0){
             System.out.println("Please enter a valid command:");
             System.out.println("'-g' -starts a GUI based uploader");
-            System.out.println("   e.g. drivesync -g");
+            System.out.println("   e.g. ./drivesync -g");
             System.out.println("lastargument -uploads this folder without a GUI");
-            System.out.println("   e.g. drivesync '/home/user/Documents/folderToBeUploaded'");
+            System.out.println("   e.g. ./drivesync '/home/user/Documents/folderToBeUploaded'");
             System.out.println("'-d' -Prevents subfolders from being uploaded");
-            System.out.println("   e.g. drivesync -d '/home/user/Documents/folderToBeUploaded'");
+            System.out.println("   e.g. ./drivesync -d '/home/user/Documents/folderToBeUploaded'");
             System.out.println("'-l' -Allows large(>25MB) files to be uploaded");
-            System.out.println("   e.g. drivesync -d '/home/user/Documents/folderToBeUploaded'");            
+            System.out.println("   e.g. ./drivesync -l '/home/user/Documents/folderToBeUploaded'");            
             return;
         }
 
@@ -103,7 +103,7 @@ public class DriveSync {
             if(s.equals("-d")){
                 Constants.RECURSIVELY_UPLOAD_SUBFOLDERS = false;
             }
-            if(s.equals("-L")){
+            if(s.equals("-l")){
                 Constants.ALLOW_LARGE_FILES = true;
             }
             if(s.equals("-g")){

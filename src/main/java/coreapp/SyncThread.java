@@ -170,11 +170,11 @@ public class SyncThread extends Thread {
             {
 //                System.out.print("File has name: " + file.getName());
                 try {
-                    long fileSize = FileUtilities.getTotalDirSizeKB(file.getPath());
+                    long fileSize = file.length()/1024;
                     if(fileSize < Constants.LARGE_FILE_SIZE || Constants.ALLOW_LARGE_FILES)
                         updateFileContent(file.getName(), path, thisFolderID);
                     else
-                        System.out.println(file.getName() + " exceeds max file size " + fileSize/1024 +"MB");
+                        System.out.println(file.getName() + " exceeds max file size (" + fileSize/1024 +"MB)");
                 } catch (IOException e) {
                     System.err.println("Could not update " + file.getName());
                     e.printStackTrace();
