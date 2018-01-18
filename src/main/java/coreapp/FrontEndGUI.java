@@ -135,29 +135,9 @@ public class FrontEndGUI extends javax.swing.JFrame implements StatusUpdateCallb
     }//GEN-LAST:event_txtPathfieldActionPerformed
 
     private void btnEnterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEnterActionPerformed
-
-        SyncThread syncThread;
-        FileUtilities fileUtilities = new FileUtilities();
         String path = txtPathfield.getText();
-        try
-        {
-            if(!fileUtilities.isValidPath(path)){
-                throw new IOException("Please enter a valid path.");
-            }
+        DriveSync.startSync(path, this);
 
-
-            path = fileUtilities.ensureEndSlash(path);
-
-            DriveInitializer.updateRootDriveConstant();
-            syncThread = new SyncThread(this, path, Constants.ROOT_FOLDER_ID);
-            syncThread.start();
-            //lblStatus.setText("Success");
-        }
-        catch (IOException e)
-        {
-            lblStatus.setText(e.getMessage());
-            System.out.println(e.getMessage());
-        }
     }//GEN-LAST:event_btnEnterActionPerformed
 
     /**

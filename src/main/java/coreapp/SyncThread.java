@@ -78,8 +78,8 @@ public class SyncThread extends Thread {
                     .setPageToken(pageToken)
                     .execute();
           for (File file : returnedFiles.getFiles()) {
-            System.out.printf("Found folder: %s (%s)\n",
-                file.getName(), file.getId());
+//            System.out.printf("Found folder: %s (%s)\n",
+//                file.getName(), file.getId());
             return file;
           }
           pageToken = returnedFiles.getNextPageToken();
@@ -100,11 +100,11 @@ public class SyncThread extends Thread {
         do {
             String Q = "mimeType='"+ mimeType+ "' and name = \""
                     + filename + "\" and '" + parentID +"' in parents and trashed = false";
-            System.out.println("Query: " + Q);
+//            System.out.println("Query: " + Q);
             FileList returnedFiles = DriveSync.driveService.files().list()
                     .setQ(Q)
                     .setSpaces("drive")
-                    .setFields("nextPageToken, files(id, name)")
+                    .setFields("nextPageToken, files(id, name, md5Checksum)")
                     .setPageToken(pageToken)
                     .execute();
             for (File file : returnedFiles.getFiles()) {
@@ -146,7 +146,7 @@ public class SyncThread extends Thread {
 
         folderMetadata.setName(name);
         folderMetadata.setMimeType("application/vnd.google-apps.folder");
-        System.out.println ("Creating folder with name: " + name);
+//        System.out.println ("Creating folder with name: " + name);
         return(DriveSync.driveService.files().create(folderMetadata)
             .setFields("id, parents")
             .execute());
@@ -167,7 +167,6 @@ public class SyncThread extends Thread {
     * @thisFolderID: ID of the folder to be uploaded
     */
     public void uploadFolder(String path, String thisFolderID)
-            throws IOException
     {
         //Convert path to java file
         java.io.File folder = new java.io.File(path);
@@ -177,12 +176,23 @@ public class SyncThread extends Thread {
         {
             if(file.isFile())
             {
-                System.out.print("File has name: " + file.getName());
-                updateFileContent(file.getName(), path, thisFolderID);
+//                System.out.print("File has name: " + file.getName());
+                try {
+                    updateFileContent(file.getName(), path, thisFolderID);
+                } catch (IOException e) {
+                    System.err.println("Could not update " + file.getName());
+                    e.printStackTrace();
+                }
             }
             else if (file.isDirectory())
             {
-                File nextFolder = getFolder(file.getName(), thisFolderID);
+                File nextFolder = null;
+                try {
+                    nextFolder = getFolder(file.getName(), thisFolderID);
+                } catch (IOException e) {
+                    System.err.println("Error retrieving data for the folder " + file.getName());
+                    e.printStackTrace();
+                }
 
 //                System.out.println("Name of folder" + file.getPath()+ "\\");
                 uploadFolder(file.getPath()+"/", nextFolder.getId());
@@ -210,8 +220,10 @@ public class SyncThread extends Thread {
 
             File uploadResult = DriveSync.driveService.files().update(currentDriveFile.getId(), metaData, mediaContent)
                     .execute();
-            System.out.println("--Updated file with ID: " + uploadResult.getId());
+//            System.out.println("--Updated file with ID: " + uploadResult.getId());
 
+            System.out.println("Updated " + filename);
+            System.out.println("MD52: " + currentDriveFile.getMd5Checksum());
         }
 
     }
@@ -225,9 +237,7 @@ public class SyncThread extends Thread {
     */
     private void uploadFile(String filename, String path, String parentID) throws IOException
     {
-        synchronized (parentClass){
-            parentClass.updateStatus(filename);
-        }
+
         FileUtilities fileUtilities = new FileUtilities();
 
 
@@ -245,13 +255,18 @@ public class SyncThread extends Thread {
         if(mimeType == null) //Do not upload
             return;
 
-        System.out.println(filename + " has type: " + mimeType);
+//        System.out.println(filename + " has type: " + mimeType);
         FileContent mediaContent = new FileContent(mimeType, filePath);
         //Attempt to upload file
         File file = DriveSync.driveService.files().create(fileMetadata, mediaContent)
             .setFields("id, parents")
             .execute();
-        System.out.println("Uploaded file with ID: " + file.getId());
+        if(parentClass != null) {
+            synchronized (parentClass) {
+                parentClass.updateStatus("Uploaded " + filename);
+            }
+        }
+        System.out.println("Uploaded " + filename);
 
     }
 
