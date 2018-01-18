@@ -16,6 +16,8 @@ import com.google.api.services.drive.DriveScopes;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -89,9 +91,9 @@ public class DriveInitializer {
                 return credential;
             }catch (IOException e){
                 attempts++;
-                DATA_STORE_DIR.delete();
+                Files.delete(Paths.get(DATA_STORE_DIR.toString(), "StoredCredential"));
                 if(attempts >= 3){
-                    throw e;
+                    throw new IOException("Failed to delete old credentials");
                 }
             }
         }
