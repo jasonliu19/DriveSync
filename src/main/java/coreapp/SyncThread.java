@@ -19,6 +19,11 @@ import com.google.api.services.drive.Drive;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -213,17 +218,28 @@ public class SyncThread extends Thread {
             File metaData  = new File();
             metaData.setName(filename);
 
+            String md5 = null;
+            //Generate MD5 checksum for local file
+            try {
+                md5 = MD5Checksum.getMD5Checksum(combinedPath);
+            } catch (Exception e){
+                System.err.println("Failed to get md5checksum of local file");
+            }
 
-            //Create path for the document to be uploaded
+            if(!md5.equals(currentDriveFile.getMd5Checksum())){
+                FileContent mediaContent = new FileContent(currentDriveFile.getMimeType(), filePath);
 
-            FileContent mediaContent = new FileContent(currentDriveFile.getMimeType(), filePath);
-
-            File uploadResult = DriveSync.driveService.files().update(currentDriveFile.getId(), metaData, mediaContent)
-                    .execute();
+                File uploadResult = DriveSync.driveService.files().update(currentDriveFile.getId(), metaData, mediaContent)
+                        .execute();
 //            System.out.println("--Updated file with ID: " + uploadResult.getId());
 
-            System.out.println("Updated " + filename);
-            System.out.println("MD52: " + currentDriveFile.getMd5Checksum());
+                System.out.println("Updated " + filename);
+            } else{
+                System.out.println(filename + " is already up to date.");
+            }
+
+
+
         }
 
     }
