@@ -3,6 +3,7 @@ package coreapp;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.*;
 import com.google.api.services.drive.Drive;
+import com.google.common.io.Files;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,8 +26,13 @@ public class DriveSync {
 
 
             path = fileUtilities.ensureEndSlash(path);
-
+            
+            driveService = DriveInitializer.getDriveService();
+            
+            Constants.ROOT_FOLDER_NAME = Files.getNameWithoutExtension(path) + " (DS)";
+            
             DriveInitializer.updateRootDriveConstant();
+            
             syncThread = new SyncThread(parentObject, path, Constants.ROOT_FOLDER_ID);
             syncThread.start();
 
@@ -66,18 +72,13 @@ public class DriveSync {
             }
 
             if(response.equals("y")){
-                
-                driveService = DriveInitializer.getDriveService();
-                DriveInitializer.updateRootDriveConstant();
-
                 startSync(path, null);
             }
             else
                 System.out.println("Aborted");
 
         }else{
-            driveService = DriveInitializer.getDriveService();
-            DriveInitializer.updateRootDriveConstant();
+
             startSync(path, null);
         }
     }
@@ -110,14 +111,19 @@ public class DriveSync {
                 System.out.println("Starting GUI");
                 startGUI = true;
             }
+            if(s.equals("-t")){
+                path = args[args.length-1];
+                System.out.println(Files.getNameWithoutExtension(path));
+               
+                return;
+            }
         }
         
         
         //Create drive service
         //Create and display the GUI
         if(startGUI) {
-            driveService = DriveInitializer.getDriveService();
-            DriveInitializer.updateRootDriveConstant();
+
             java.awt.EventQueue.invokeLater(new Runnable() {
                 public void run() {
                     new FrontEndGUI().setVisible(true);

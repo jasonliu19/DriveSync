@@ -53,9 +53,9 @@ public class SyncThread extends Thread {
 
     public File updateMainDriveFolder()throws IOException{
         File rootFolder;
-        rootFolder = checkForFolder("DriveSync Test", null);
+        rootFolder = checkForFolder(Constants.ROOT_FOLDER_NAME, null);
         if (rootFolder == null)
-            rootFolder = createFolder("DriveSync Test", "root");
+            rootFolder = createFolder(Constants.ROOT_FOLDER_NAME, "root");
         return rootFolder;
     }
 
