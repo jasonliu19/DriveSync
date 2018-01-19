@@ -4,6 +4,7 @@ import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.*;
 import com.google.api.services.drive.Drive;
 import com.google.common.io.Files;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
@@ -124,8 +125,7 @@ public class DriveSync {
                 startGUI = true;
             }
             if(s.equals("-s")){
-                System.out.println("Starting GUI");
-                startGUI = true;
+                Constants.USE_LAST_PATH = true;
             }
             if(s.equals("-t")){
                 path = args[args.length-1];
@@ -151,6 +151,10 @@ public class DriveSync {
                 BufferedReader reader = new BufferedReader(new FileReader(Constants.SAVE_PATH));
                 path = reader.readLine();
                 reader.close();
+                if(!FileUtilities.isValidPath(path)){
+                    System.out.println("Previous backup path not found");
+                    System.exit(0);
+                }
                 System.out.println(path + " will be backed up. Proceed? y/n");
                 if(!verifyWithUser()){
                     System.out.println("Aborted");

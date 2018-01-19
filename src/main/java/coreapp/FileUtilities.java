@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class FileUtilities {
-    public boolean isValidPath(String path){
+    public static boolean isValidPath(String path){
         File filePath = new File(path);
         if(filePath.isDirectory()){
             return true;
