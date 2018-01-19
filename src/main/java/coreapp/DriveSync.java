@@ -7,12 +7,15 @@ import com.google.common.io.Files;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -128,8 +131,18 @@ public class DriveSync {
                 Constants.USE_LAST_PATH = true;
             }
             if(s.equals("-t")){
-                path = args[args.length-1];
-                System.out.println(Files.getNameWithoutExtension(path));
+                //path = args[args.length-1];
+                path = "C:\\Users\\Jason\\Desktop\\2d\\test.jpg";
+                driveService = DriveInitializer.getDriveService();
+                
+                String fileId = "1AhJ6lATAO9SiRMof1oFVbqgAWLKhh8zj";
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                driveService.files().get(fileId)
+                    .executeMediaAndDownloadTo(outputStream);
+                
+                
+                FileOutputStream fileWriter = new FileOutputStream(new java.io.File(path));
+                fileWriter.write(outputStream.toByteArray());
                
                 return;
             }
