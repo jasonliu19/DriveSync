@@ -4,6 +4,10 @@ import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.*;
 import com.google.api.services.drive.Drive;
 import com.google.common.io.Files;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +50,19 @@ public class DriveSync {
     }
 
 
+    private static boolean verifyWithUser(){
+        String response = " ";
+        Scanner scanner = new Scanner(System.in);
+        while(!response.equals("y") && !response.equals("n")){
+            response = scanner.next() ;
+        }
+        if(response.equals("y"))
+            return true;
+        else
+            return false;
+
+    }
+    
     private static void startSyncFromShell(String path){
         FileUtilities fileUtilities = new FileUtilities();
         try
@@ -65,20 +82,13 @@ public class DriveSync {
         long totalSizeOfData = FileUtilities.getTotalDirSizeKB(path);
         if(totalSizeOfData > Constants.DATASIZE_WARNING_AMOUNT){
             System.out.println(path + " has " +totalSizeOfData/1024 + "MB of data. Proceed? y/n");
-            String response = " ";
-            Scanner scanner = new Scanner(System.in);
-            while(!response.equals("y") && !response.equals("n")){
-                response = scanner.next() ;
-            }
-
-            if(response.equals("y")){
+            
+            if(verifyWithUser())
                 startSync(path, null);
-            }
             else
                 System.out.println("Aborted");
 
         }else{
-
             startSync(path, null);
         }
     }
@@ -96,7 +106,9 @@ public class DriveSync {
             System.out.println("'-d' -Prevents subfolders from being uploaded");
             System.out.println("   e.g. ./drivesync -d '/home/user/Documents/folderToBeUploaded'");
             System.out.println("'-l' -Allows large(>25MB) files to be uploaded");
-            System.out.println("   e.g. ./drivesync -l '/home/user/Documents/folderToBeUploaded'");            
+            System.out.println("   e.g. ./drivesync -l '/home/user/Documents/folderToBeUploaded'");
+            System.out.println("'-s' -Run using previous path");
+            System.out.println("   e.g. ./drivesync -s '/home/user/Documents/folderToBeUploaded'");                 
             return;
         }
 
@@ -108,6 +120,10 @@ public class DriveSync {
                 Constants.ALLOW_LARGE_FILES = true;
             }
             if(s.equals("-g")){
+                System.out.println("Starting GUI");
+                startGUI = true;
+            }
+            if(s.equals("-s")){
                 System.out.println("Starting GUI");
                 startGUI = true;
             }
@@ -131,7 +147,23 @@ public class DriveSync {
                 }
             });
         } else{
-            path = args[args.length-1];
+            if(Constants.USE_LAST_PATH){
+                BufferedReader reader = new BufferedReader(new FileReader(Constants.SAVE_PATH));
+                path = reader.readLine();
+                reader.close();
+                System.out.println(path + " will be backed up. Proceed? y/n");
+                if(!verifyWithUser()){
+                    System.out.println("Aborted");
+                    System.exit(0);
+                }
+                
+            }else{
+                path = args[args.length-1];
+                BufferedWriter writer = new BufferedWriter(new FileWriter(Constants.SAVE_PATH));
+                writer.write(path);
+     
+                writer.close();
+            }
             startSyncFromShell(path);
         }
     }
